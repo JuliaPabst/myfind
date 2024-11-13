@@ -38,16 +38,12 @@ void search_file(const char *searchpath, const char *filename) {
 
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        // Check if the filename matches
         if (strcmp(entry->d_name, filename) == 0) {
-            // Construct the relative path to the found file
             char relative_path[PATH_MAX];
             snprintf(relative_path, sizeof(relative_path), "%s/%s", searchpath, entry->d_name);
 
-            // Get the absolute path
             char absolute_path[PATH_MAX];
             if (realpath(relative_path, absolute_path) != NULL) {
-                // Output the PID and absolute path
                 printf("%d: %s: %s\n", getpid(), filename, absolute_path);
             } else {
                 perror("Error resolving absolute path");
