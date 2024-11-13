@@ -6,6 +6,9 @@ int main(int argc, char *argv[]) {
         printf("Usage: %s [-R] [-i] searchpath filename1 [filename2 ...]\n", argv[0]);
         return 1;
     }
-    parse_arguments(argc, argv);
+    const Arguments arguments = parse_arguments(argc, argv);
+    find_files(arguments);
+    
+
     return 0;
 }
