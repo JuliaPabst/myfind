@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <limits.h>
 #include "myfind.h"
 
 int main(int argc, char *argv[]) {
