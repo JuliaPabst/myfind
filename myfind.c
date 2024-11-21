@@ -60,7 +60,9 @@ void search_file(const char *searchpath, const char *filename, Arguments* argume
             // print the pid, filename and absolute path is realpath exists
             char absolute_path[PATH_MAX];
             if (realpath(relative_path, absolute_path) != NULL) {
+                flockfile(stdout); // lock stdout to prevent interleaved output
                 printf("%d: %s: %s\n", getpid(), filename, absolute_path);
+                funlockfile(stdout); // unlock stdout
             } else {
                 perror("Error resolving absolute path");
             }
