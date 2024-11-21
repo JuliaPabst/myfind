@@ -43,6 +43,12 @@ void search_file(const char *searchpath, const char *filename, Arguments* argume
     // predefine an entry and loop over all entries in directory
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
+
+        // ignore . and .. directories
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+
         // choose the right comparison function based on case_insensitive flag
         int match = arguments->case_insensitive ? strcasecmp(entry->d_name, filename) == 0 : strcmp(entry->d_name, filename) == 0;
 
@@ -58,16 +64,18 @@ void search_file(const char *searchpath, const char *filename, Arguments* argume
             } else {
                 perror("Error resolving absolute path");
             }
-            // terminate process without an error
-            closedir(dir);
-            free(arguments->filenames);
-            exit(0);
+        }
+
+        // recursively search subdirectories if recursive flag is set
+        if (arguments->recursive && entry->d_type == DT_DIR) {
+            // combine directory path and filename to one string
+            char subdir_path[PATH_MAX];
+            snprintf(subdir_path, sizeof(subdir_path), "%s/%s", searchpath, entry->d_name);
+            search_file(subdir_path, filename, arguments);
         }
     }
-    // terminate process with an error
+    
     closedir(dir);
-    free(arguments->filenames);
-    exit(1); 
 }
 
 void find_files(Arguments arguments) {
@@ -80,6 +88,7 @@ void find_files(Arguments arguments) {
         } else if (pid == 0) {
             // if fork is a child process: search file 
             search_file(arguments.searchpath, arguments.filenames[i], &arguments);
+            exit(0);
         }
     }
 
