@@ -43,8 +43,10 @@ void search_file(const char *searchpath, const char *filename, Arguments* argume
     // predefine an entry and loop over all entries in directory
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        // compare the name of the entry with the filename 
-        if (strcmp(entry->d_name, filename) == 0) {
+        // choose the right comparison function based on case_insensitive flag
+        int match = arguments->case_insensitive ? strcasecmp(entry->d_name, filename) == 0 : strcmp(entry->d_name, filename) == 0;
+
+        if (match) {
             // combine directory path and filename to one string
             char relative_path[PATH_MAX];
             snprintf(relative_path, sizeof(relative_path), "%s/%s", searchpath, entry->d_name);
