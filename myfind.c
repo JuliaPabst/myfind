@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <limits.h>
+#include <sys/stat.h>
 
 Arguments parse_arguments(int argc, char *argv[]) {
     // define arguments struct with default values
@@ -17,16 +18,29 @@ Arguments parse_arguments(int argc, char *argv[]) {
     arguments.filenames = malloc((argc -1) * sizeof(char *));
     for (int i = 1; i < argc; i++) {
         // allocate different words to right values in arguments struct
-        if(argv[i][0] == '.' && argv[i][1] == '/'){
+        if (argv[i][0] == '.' && argv[i][1] == '/'){
+            // check if the path is a valid directory
+            struct stat path_stat;
+            if (stat(argv[i], &path_stat) != 0 || !S_ISDIR(path_stat.st_mode)) {
+                fprintf(stderr, "Error: '%s' is not a valid directory\n", argv[i]);
+                exit(1);
+            }
             arguments.searchpath = argv[i];  
-        } else if(argv[i][0] == '-' && argv[i][1] == 'R' && argv[i][2] == '\0'){
+        } else if (strcmp(argv[i], "-R") == 0){
             arguments.recursive = 1;  
-        } else if(argv[i][0] == '-' && argv[i][1] == 'i' && argv[i][2] == '\0'){
+        } else if (strcmp(argv[i], "-i") == 0){
             arguments.case_insensitive = 1;  
         } else {
             arguments.filenames[arguments.numberOfFiles] = argv[i];
             arguments.numberOfFiles++;
         }
+    }
+
+    // check if searchpath and filenames are correctly set
+    if (arguments.searchpath == NULL || arguments.numberOfFiles == 0) {
+        fprintf(stderr, "Usage: %s <searchpath> [-R] [-i] <filename1> [<filename2> ...]\n", argv[0]);
+        free(arguments.filenames);
+        exit(1);
     }
 
     return arguments;
@@ -86,6 +100,7 @@ void find_files(Arguments arguments) {
 
         if (pid < 0) {
             perror("Fork failed");
+            free(arguments.filenames);
             exit(1);
         } else if (pid == 0) {
             // if fork is a child process: search file 
