@@ -18,14 +18,23 @@ Arguments parse_arguments(int argc, char *argv[]) {
     arguments.filenames = malloc((argc -1) * sizeof(char *));
     for (int i = 1; i < argc; i++) {
         // allocate different words to right values in arguments struct
-        if (argv[i][0] == '.' && argv[i][1] == '/'){
-            // check if the path is a valid directory
-            struct stat path_stat;
-            if (stat(argv[i], &path_stat) != 0 || !S_ISDIR(path_stat.st_mode)) {
-                fprintf(stderr, "Error: '%s' is not a valid directory\n", argv[i]);
+        if (argv[i][0] == '.' || argv[i][0] == '/'){
+
+            char absolute_path[PATH_MAX];
+            if (realpath(argv[i], absolute_path) != NULL) {
+                // check if the path is a valid directory
+                struct stat path_stat;
+                if (stat(absolute_path, &path_stat) != 0 || !S_ISDIR(path_stat.st_mode)) {
+                    fprintf(stderr, "Error: '%s' is not a valid directory\n", argv[i]);
+                    free(arguments.filenames);
+                    exit(1);
+                }
+                arguments.searchpath = strdup(absolute_path);   // saves absolute path
+            } else {
+                fprintf(stderr, "Error: '%s' is not a valid path.\n", argv[i]);
+                free(arguments.filenames);
                 exit(1);
             }
-            arguments.searchpath = argv[i];  
         } else if (strcmp(argv[i], "-R") == 0){
             arguments.recursive = 1;  
         } else if (strcmp(argv[i], "-i") == 0){
